@@ -1,39 +1,35 @@
 #!/bin/sh
-# Pasang / perbarui POS di VPS lalu sambungkan ke jaringan Caddy yang
-# memegang port 80/443 (proyek bekuin). Jalankan dari mana saja:
+# Pasang / perbarui POS di VPS. Jalankan dari mana saja:
 #   sh ~/pos-backend/docker/deploy.sh
 #
-# Sambungan jaringan dibuat manual (docker network connect), bukan lewat
-# docker compose, karena di Docker 29 sambungan dari compose kadang
-# terpasang tanpa IP. Sambungan manual tetap ada saat restart/reboot,
-# hanya perlu dibuat ulang setelah container dibuat ulang (skrip ini).
+# Caddy proyek bekuin (container bekuin-web-1) memegang port 80/443 dan
+# meneruskan pos-begul.my.id ke POS lewat gateway jaringan bekuin:
+#   reverse_proxy 172.18.0.1:8080
+# Karena itu .env berisi POS_BIND=172.18.0.1 (hanya bisa dijangkau dari
+# dalam VPS, tidak terbuka ke internet).
 set -e
 cd "$(dirname "$0")/.."
 
-NET="${PROXY_NETWORK:-bekuin_default}"
 PROXY="${PROXY_CONTAINER:-bekuin-web-1}"
-APP=pos-app-1
+BIND=$(grep -E '^POS_BIND=' .env | cut -d= -f2)
+PORT=$(grep -E '^POS_PORT=' .env | cut -d= -f2)
+BIND="${BIND:-127.0.0.1}"
+PORT="${PORT:-8080}"
 
 echo "== Ambil kode terbaru"
 git pull --ff-only
 
-echo "== Build & jalankan container POS"
+echo "== Build & jalankan container POS (port $BIND:$PORT)"
 docker compose up -d --build --remove-orphans
-
-echo "== Sambungkan $APP ke jaringan $NET (nama: pos-app)"
-docker network disconnect -f "$NET" "$APP" >/dev/null 2>&1 || true
-docker network connect --alias pos-app "$NET" "$APP"
 
 echo "== Menunggu aplikasi siap"
 i=0
-until docker exec "$PROXY" wget -qO- http://pos-app/api/ping >/dev/null 2>&1; do
+until docker exec "$PROXY" wget -qO- "http://$BIND:$PORT/api/ping" >/dev/null 2>&1; do
     i=$((i + 1))
     if [ "$i" -ge 30 ]; then
-        echo "GAGAL: $PROXY belum bisa menjangkau pos-app. Cek: docker compose logs app --tail 30"
+        echo "GAGAL: $PROXY belum bisa menjangkau http://$BIND:$PORT. Cek: docker compose logs app --tail 30"
         exit 1
     fi
     sleep 2
 done
-
-IP=$(docker inspect "$APP" --format "{{(index .NetworkSettings.Networks \"$NET\").IPAddress}}")
-echo "BERHASIL: Caddy ($PROXY) tersambung ke POS di $IP"
+echo "BERHASIL: Caddy ($PROXY) bisa menjangkau POS di http://$BIND:$PORT"
