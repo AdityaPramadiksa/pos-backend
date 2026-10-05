@@ -12,7 +12,9 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    // Di VPS aplikasi berjalan di belakang reverse proxy (https), port
+    // aplikasinya hanya terbuka untuk 127.0.0.1
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.

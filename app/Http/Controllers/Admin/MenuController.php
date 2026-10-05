@@ -59,7 +59,7 @@ class MenuController extends Controller
             'is_available'  => true,
         ]);
 
-        return redirect()->route('admin.menu.index')->with('success', 'Menu Babi Guling berhasil ditambahkan!');
+        return redirect()->route('admin.menu.index')->with('success', 'Menu ' . $request->name . ' ditambahkan.');
     }
 
     /**
@@ -105,7 +105,7 @@ class MenuController extends Controller
 
         $menu->update($data);
 
-        return redirect()->route('admin.menu.index')->with('success', 'Menu berhasil diperbarui!');
+        return redirect()->route('admin.menu.index')->with('success', 'Perubahan menu ' . $menu->name . ' disimpan.');
     }
 
     /**
@@ -125,7 +125,7 @@ class MenuController extends Controller
 
         $menu->delete();
 
-        return back()->with('success', 'Menu telah dihapus permanen dari sistem!');
+        return back()->with('success', 'Menu ' . $menu->name . ' dihapus.');
     }
 
     /**
@@ -138,7 +138,7 @@ class MenuController extends Controller
             'is_available' => !$menu->is_available
         ]);
 
-        $status = $menu->is_available ? 'diaktifkan' : 'dinonaktifkan';
-        return back()->with('success', "Menu $menu->name berhasil $status!");
+        $status = $menu->is_available ? 'tampil lagi di aplikasi kasir' : 'disembunyikan dari aplikasi kasir';
+        return back()->with('success', "{$menu->name} $status.");
     }
 }

@@ -119,12 +119,21 @@ class SettlementController extends Controller
      */
     public function appSettings()
     {
-        $taxRate = Setting::getValue('tax_rate');
+        $s = \App\Http\Controllers\Admin\SettingController::values();
 
         return response()->json([
             'status' => 'success',
             'data' => [
-                'tax_rate' => $taxRate !== null ? (float) $taxRate : 10,
+                'tax_rate' => (float) $s['tax_rate'],
+                'low_stock_threshold' => (int) $s['low_stock_threshold'],
+                // Isi struk diatur dari panel admin > Pengaturan
+                'receipt' => [
+                    'shop_name' => $s['shop_name'],
+                    'shop_address' => $s['shop_address'],
+                    'shop_phone' => $s['shop_phone'],
+                    'footer' => $s['receipt_footer'],
+                    'show_cashier' => $s['receipt_show_cashier'] === '1',
+                ],
             ],
         ]);
     }

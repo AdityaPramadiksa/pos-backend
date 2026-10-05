@@ -4,93 +4,89 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\Setting;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class SettingController extends Controller
 {
-    /**
-     * Menampilkan halaman pengaturan
-     */
-    public function index()
-    {
-        $settings = [
-            'shop_name'           => Setting::getValue('shop_name', 'Babi Guling Dharma Praja'),
-            'shop_phone'          => Setting::getValue('shop_phone', '08123456789'),
-            'shop_address'        => Setting::getValue('shop_address', 'Denpasar, Bali'),
-            'receipt_footer'      => Setting::getValue('receipt_footer', 'Terima Kasih, Selamat Menikmati!'),
-            'starting_cash'       => Setting::getValue('starting_cash', 500000),
-            'tax_rate'            => Setting::getValue('tax_rate', 10),
-            'service_charge'      => Setting::getValue('service_charge', 0),
-            'low_stock_threshold' => Setting::getValue('low_stock_threshold', 10),
-            'printer_target'      => Setting::getValue('printer_target', ''),
-            'printer_type'        => Setting::getValue('printer_type', 'network'),
-        ];
+    /** Nilai bawaan bila belum pernah disimpan */
+    public const DEFAULTS = [
+        'shop_name'            => "WARUNG BABI GULING\nMEN GEDE",
+        'shop_address'         => "Jl. Poppies I, Kuta, Kec. Kuta\nKab. Badung, Bali 80361",
+        'shop_phone'           => '0822-3660-6374',
+        'receipt_footer'       => "Matur Suksma!\nTerima kasih atas kunjungan Anda",
+        'receipt_show_cashier' => '1',
+        'starting_cash'        => '500000',
+        'tax_rate'             => '10',
+        'low_stock_threshold'  => '10',
+    ];
 
-        return view('admin.settings.index', $settings);
+    public static function values(): array
+    {
+        $stored = Setting::whereIn('key', array_keys(self::DEFAULTS))->pluck('value', 'key')->all();
+        return array_merge(self::DEFAULTS, $stored);
     }
 
-    /**
-     * Menyimpan pengaturan toko
-     */
-    /**
-     * Menyimpan pengaturan toko
-     */
-    /**
-     * Menyimpan pengaturan toko
-     */
-  /**
-     * Menyimpan pengaturan toko
-     */
+    public function index()
+    {
+        return view('admin.settings.index', ['settings' => self::values()]);
+    }
+
     public function update(Request $request)
     {
         $validated = $request->validate([
             'shop_name'           => 'required|string|max:100',
             'shop_phone'          => 'required|string|max:20',
-            'shop_address'        => 'required|string',
-            'receipt_footer'      => 'required|string',
-            'starting_cash'       => 'required|numeric|min:0',
+            'shop_address'        => 'required|string|max:255',
+            'receipt_footer'      => 'required|string|max:255',
+            'starting_cash'       => 'required|integer|min:0',
             'tax_rate'            => 'required|numeric|min:0|max:100',
-            'service_charge'      => 'required|numeric|min:0',
             'low_stock_threshold' => 'required|integer|min:0',
-            'printer_target'      => 'nullable|string',
-            'printer_type'        => 'required|in:network,bluetooth,usb',
+        ], [], [
+            'shop_name' => 'nama warung',
+            'shop_phone' => 'nomor telepon',
+            'shop_address' => 'alamat',
+            'receipt_footer' => 'catatan kaki struk',
+            'starting_cash' => 'modal awal',
+            'tax_rate' => 'pajak',
+            'low_stock_threshold' => 'batas stok menipis',
         ]);
 
-        // Simpan langsung ke Database
+        // Rapikan baris kosong & spasi di ujung supaya struk tidak berantakan
+        foreach (['shop_name', 'shop_address', 'receipt_footer'] as $key) {
+            $lines = array_filter(array_map('trim', preg_split('/\R/', $validated[$key])), 'strlen');
+            $validated[$key] = implode("\n", $lines);
+        }
+        $validated['receipt_show_cashier'] = $request->boolean('receipt_show_cashier') ? '1' : '0';
+
         foreach ($validated as $key => $value) {
-            \App\Models\Setting::updateOrCreate(
-                ['key' => $key],
-                // FIX: Gunakan null coalescing (?? '') agar null diubah jadi string kosong
-                ['value' => $value ?? '']
-            );
+            Setting::updateOrCreate(['key' => $key], ['value' => (string) $value]);
         }
 
-        return back()->with('success', 'Semua pengaturan berhasil diperbarui!');
+        return back()->with('success', 'Pengaturan tersimpan. Aplikasi kasir memakai data baru setelah halaman Kasir dibuka ulang.');
     }
-    /**
-     * Update PIN Khusus untuk Security
-     */
+
+    /** PIN admin yang sedang login (dipakai untuk menyetujui pembatalan transaksi) */
     public function updatePin(Request $request)
     {
-        $request->validate([
-            'new_pin' => 'required|numeric|digits:4',
-            'admin_password' => 'required'
-        ]);
-
         $user = Auth::user();
 
-        // Cek apakah password admin benar sebelum ganti PIN
-        if (!Hash::check($request->admin_password, $user->password)) {
-            return back()->with('error', 'Konfirmasi Password Salah! PIN gagal diubah.');
-        }
-
-        $user->update([
-            'pin' => $request->new_pin
+        $request->validate([
+            'new_pin' => ['required', 'digits:4', Rule::unique('users', 'pin')->ignore($user->id)],
+            'admin_password' => 'required'
+        ], [
+            'new_pin.unique' => 'PIN ini sudah dipakai staff lain. Pilih 4 angka lain.',
+            'new_pin.digits' => 'PIN harus 4 angka.',
         ]);
 
-        return back()->with('success', 'Security PIN Anda berhasil diperbarui!');
+        if (!Hash::check($request->admin_password, $user->password)) {
+            return back()->with('error', 'Password salah. PIN tidak diganti.');
+        }
+
+        $user->update(['pin' => $request->new_pin]);
+
+        return back()->with('success', 'PIN admin berhasil diganti.');
     }
 }

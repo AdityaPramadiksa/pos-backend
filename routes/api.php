@@ -17,6 +17,13 @@ use App\Http\Controllers\Api\ExpenseController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login-pin', [AuthController::class, 'loginPin']);
 
+// Cek koneksi dari aplikasi kasir (tanpa token)
+Route::get('/ping', fn () => response()->json([
+    'status' => 'success',
+    'app' => 'pos-men-gede',
+    'time' => now()->toIso8601String(),
+]));
+
 // 🔥 JALUR VIP GAMBAR MENU: Bypass CORS untuk Flutter Web
 Route::get('/menu-image/{filename}', function ($filename) {
     // Cari gambar langsung di folder storage/app/public/menus
@@ -56,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Master Data
     Route::get('/categories', [MenuController::class, 'getCategories']);
     Route::get('/menus', [MenuController::class, 'getMenus']);
+    Route::post('/menus/{id}/stock', [MenuController::class, 'updateStock']);
     Route::get('/discounts', [ApiDiscount::class, 'index']);
     Route::get('/settings', [SettlementController::class, 'appSettings']);
 
@@ -67,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/recapitulation', [OrderController::class, 'recapitulation']);
         Route::post('/{id}/void', [OrderController::class, 'voidOrder']);
         Route::post('/{id}/pay', [OrderController::class, 'payPendingOrder']);
+        Route::post('/{id}/items', [OrderController::class, 'addItems']);
     });
 
     // Modul Shift (Settlement)

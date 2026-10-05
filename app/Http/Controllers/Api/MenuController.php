@@ -27,6 +27,26 @@ class MenuController extends Controller {
     }
 
     /**
+     * 1b. Ubah sisa stok dari aplikasi kasir (0 = tandai habis)
+     */
+    public function updateStock(Request $request, $id) {
+        $request->validate([
+            'stock' => 'required|integer|min:0|max:99999',
+        ]);
+
+        $menu = Menu::findOrFail($id);
+        $menu->update(['stock' => (int) $request->stock]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $menu->stock > 0
+                ? "Stok {$menu->name} sekarang {$menu->stock} porsi"
+                : "{$menu->name} ditandai habis",
+            'data' => $menu->load('category'),
+        ]);
+    }
+
+    /**
      * 2. Ambil semua kategori untuk Tab Filter di Flutter
      */
     public function getCategories() {
@@ -69,7 +89,7 @@ class MenuController extends Controller {
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Menu Babi Guling berhasil ditambahkan!',
+            'message' => 'Menu ditambahkan.',
             'data' => $menu->load('category')
         ], 201);
     }

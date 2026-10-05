@@ -34,8 +34,16 @@ class ExpenseController extends Controller
         $request->validate([
             'amount' => 'required|integer|min:1',
             'description' => 'required|string|max:255',
-            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048' // Maksimal 2MB
+            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Maksimal 2MB
+            'client_uuid' => 'nullable|string|max:36',
+            'created_at' => 'nullable|date',
         ]);
+
+        // Pengeluaran yang sama terkirim ulang dari aplikasi (sinyal putus)
+        if ($request->filled('client_uuid')
+            && ($existing = Expense::where('client_uuid', $request->client_uuid)->first())) {
+            return response()->json(['status' => 'success', 'duplicate' => true, 'data' => $existing], 200);
+        }
 
         try {
             $imagePath = null;
@@ -48,19 +56,22 @@ class ExpenseController extends Controller
 
             $shift = ShiftReportService::activeShift($request->user());
 
-            $expense = Expense::create([
+            $expense = new Expense([
                 'user_id' => $request->user()->id,
                 'settlement_id' => $shift->id,
                 'amount' => $request->amount,
                 'description' => $request->description,
                 'receipt_image' => $imagePath,
+                'client_uuid' => $request->client_uuid,
             ]);
+            $expense->created_at = self::clientTime($request->created_at);
+            $expense->save();
 
             ShiftReportService::syncTotals($shift);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Pengeluaran berhasil dicatat!',
+                'message' => 'Pengeluaran dicatat.',
                 'data' => $expense
             ], 201);
 
@@ -70,5 +81,24 @@ class ExpenseController extends Controller
                 'message' => 'Gagal mencatat pengeluaran: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Waktu pencatatan dari aplikasi (bisa lebih awal bila tercatat saat offline).
+     */
+    private static function clientTime($value): Carbon
+    {
+        $now = Carbon::now();
+        if (!$value) {
+            return $now;
+        }
+
+        try {
+            $time = Carbon::parse($value)->setTimezone(config('app.timezone'));
+        } catch (\Exception $e) {
+            return $now;
+        }
+
+        return $time->between($now->copy()->subDays(7), $now->copy()->addMinutes(5)) ? $time : $now;
     }
 }

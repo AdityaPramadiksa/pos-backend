@@ -25,7 +25,7 @@ class CategoryController extends Controller
 
         Category::create($request->all());
 
-        return back()->with('success', 'Kategori baru berhasil ditambahkan!');
+        return back()->with('success', 'Kategori ditambahkan.');
     }
 
     // Hapus kategori
@@ -35,10 +35,10 @@ class CategoryController extends Controller
 
         // Cek dulu, jangan sampai hapus kategori yang masih ada isi menunya
         if ($category->menus()->count() > 0) {
-            return back()->with('error', 'Gagal! Kategori ini masih memiliki menu di dalamnya.');
+            return back()->with('error', 'Kategori ini masih berisi menu. Pindahkan atau hapus menunya dulu.');
         }
 
         $category->delete();
-        return back()->with('success', 'Kategori berhasil dihapus!');
+        return back()->with('success', 'Kategori dihapus.');
     }
 }

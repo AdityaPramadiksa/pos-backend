@@ -16,7 +16,8 @@ class OrderItem extends Model
         'qty',
         'subtotal',
         'note',
-        'is_kitchen_printed'
+        'is_kitchen_printed',
+        'client_batch',
     ];
 
     // Relasi balik ke Struk Utama

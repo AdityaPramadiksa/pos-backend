@@ -108,11 +108,11 @@ class OrderController extends Controller
             }
 
             DB::commit();
-            return back()->with('success', 'Transaksi VOID berhasil. Stok kembali dan saldo settlement telah dikurangi.');
+            return back()->with('success', 'Transaksi dibatalkan. Stok menu dikembalikan dan total shift dihitung ulang.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memproses VOID: ' . $e->getMessage());
+            return back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
         }
     }
 }

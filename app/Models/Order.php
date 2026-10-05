@@ -28,7 +28,9 @@ class Order extends Model
         'void_reason',
         'notes',             // Tambahan Baru
         'settlement_id',     // Shift tempat pembayaran diterima
-        'paid_at'
+        'paid_at',
+        'client_uuid',       // Penanda dari aplikasi kasir (anti dobel)
+        'pay_uuid',
     ];
 
     protected $casts = [

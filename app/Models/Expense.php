@@ -15,6 +15,7 @@ class Expense extends Model
         'description',
         'receipt_image',
         'settlement_id',
+        'client_uuid',
     ];
 
     // Relasi untuk mengetahui siapa kasir yang menginput

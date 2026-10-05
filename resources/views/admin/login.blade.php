@@ -1,58 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin - POS Babi Guling</title>
+    <title>Masuk · Panel Admin Men Gede</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', '"Segoe UI"', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        ground: '#F5F6F4', ink: '#1D2422', muted: '#5D6965', line: '#E2E6E3', field: '#D5DBD7',
+                        brand: { DEFAULT: '#9A5317', dark: '#7A4011' }, bad: { DEFAULT: '#B83A2B', soft: '#FBE9E6' },
+                    },
+                },
+            },
+        };
+    </script>
 </head>
 
-<body class="bg-[#1F1D2B] flex items-center justify-center min-h-screen">
-    <div class="bg-[#2D303E] p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-[#EA7C69]">Welcome Back</h1>
-            <p class="text-gray-400 mt-2">Please login to admin account</p>
+<body class="flex min-h-screen items-center justify-center bg-ground px-4 font-sans text-ink">
+    <main class="w-full max-w-[400px]">
+        <div class="mb-8 flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-[10px] bg-brand text-sm font-bold text-white">MG</span>
+            <div>
+                <div class="text-lg font-bold leading-tight">Men Gede</div>
+                <div class="text-sm text-muted">Panel admin</div>
+            </div>
         </div>
 
-        {{-- 1. Tampilkan Error Validasi (Email/Password Salah) --}}
-        @if ($errors->any())
-            <div class="bg-red-500/10 border border-red-500 text-red-500 p-3 rounded-lg mb-6 text-sm flex items-center">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                {{ $errors->first() }}
-            </div>
-        @endif
+        <div class="rounded-[14px] border border-line bg-white p-6 sm:p-8">
+            <h1 class="text-xl font-bold">Masuk</h1>
+            <p class="mt-1 text-sm text-muted">Gunakan email dan password akun admin.</p>
 
-        {{-- 2. Tampilkan Error Keamanan (Akses Dibatasi / Session Expired) --}}
-        @if (session('error'))
-            <div
-                class="bg-orange-500/10 border border-orange-500 text-orange-500 p-3 rounded-lg mb-6 text-sm flex items-center">
-                <i class="fas fa-shield-alt mr-2"></i>
-                {{ session('error') }}
-            </div>
-        @endif
+            @if ($errors->any())
+                <div role="alert" class="mt-5 rounded-[10px] bg-bad-soft px-3.5 py-2.5 text-sm text-bad">{{ $errors->first() }}</div>
+            @endif
+            @if (session('error'))
+                <div role="alert" class="mt-5 rounded-[10px] bg-bad-soft px-3.5 py-2.5 text-sm text-bad">{{ session('error') }}</div>
+            @endif
 
-        <form action="{{ route('login') }}" method="POST" class="space-y-6">
-            @csrf <div>
-                <label class="block text-gray-400 mb-2 text-sm">Email Address</label>
-                <input type="email" name="email" required
-                    class="w-full bg-[#1F1D2B] border border-gray-600 rounded-xl p-4 text-white focus:border-[#EA7C69] outline-none transition"
-                    placeholder="admin@pos.com">
-            </div>
-
-            <div>
-                <label class="block text-gray-400 mb-2 text-sm">Password</label>
-                <input type="password" name="password" required
-                    class="w-full bg-[#1F1D2B] border border-gray-600 rounded-xl p-4 text-white focus:border-[#EA7C69] outline-none transition"
-                    placeholder="••••••••">
-            </div>
-
-            <button type="submit"
-                class="w-full bg-[#EA7C69] hover:bg-[#f08d7d] text-white font-bold py-4 rounded-xl transition shadow-lg shadow-[#ea7c694d]">
-                Login to Dashboard
-            </button>
-        </form>
-    </div>
+            <form action="{{ route('login') }}" method="POST" class="mt-6 flex flex-col gap-4">
+                @csrf
+                <div>
+                    <label for="email" class="mb-1.5 block text-[13px] font-medium">Email</label>
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
+                        class="w-full rounded-[10px] border border-field px-3 py-2.5 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30">
+                </div>
+                <div>
+                    <label for="password" class="mb-1.5 block text-[13px] font-medium">Password</label>
+                    <input id="password" type="password" name="password" required autocomplete="current-password"
+                        class="w-full rounded-[10px] border border-field px-3 py-2.5 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30">
+                </div>
+                <button type="submit" class="mt-2 rounded-[10px] bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">
+                    Masuk
+                </button>
+            </form>
+        </div>
+        <p class="mt-4 text-center text-xs text-muted">Kasir masuk lewat aplikasi kasir dengan PIN.</p>
+    </main>
 </body>
 
 </html>

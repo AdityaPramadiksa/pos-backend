@@ -26,12 +26,12 @@ class DiscountController extends Controller
 
         Discount::create($request->all());
 
-        return redirect()->back()->with('success', 'Diskon baru berhasil dibuat!');
+        return redirect()->back()->with('success', 'Diskon ditambahkan.');
     }
 
     public function destroy($id)
     {
         Discount::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Diskon berhasil dihapus!');
+        return redirect()->back()->with('success', 'Diskon dihapus.');
     }
 }

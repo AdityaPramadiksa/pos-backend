@@ -22,7 +22,7 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Email atau Password salah!'
+                'message' => 'Email atau password salah.'
             ], 401);
         }
 
@@ -43,6 +43,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'pin' => 'required|string|min:4',
+            'device_id' => 'nullable|string|max:40',
         ]);
 
         // Cari user berdasarkan PIN
@@ -51,19 +52,22 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'PIN salah atau petugas tidak ditemukan.'
+                'message' => 'PIN salah. Coba lagi atau tanyakan PIN ke admin.'
             ], 401);
         }
 
-        // Hapus token lama jika ada (biar nggak numpuk)
-        $user->tokens()->delete();
+        // Satu token per perangkat. Token di HP lain tetap berlaku, supaya
+        // transaksi offline di HP itu masih bisa terkirim nanti.
+        $tokenName = $request->filled('device_id')
+            ? 'pos-device-' . $request->device_id
+            : 'pos-resto-token';
+        $user->tokens()->where('name', $tokenName)->delete();
 
-        // Buat token baru
-        $token = $user->createToken('pos-resto-token')->plainTextToken;
+        $token = $user->createToken($tokenName)->plainTextToken;
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Login Berhasil (Via PIN)',
+            'message' => 'Berhasil masuk.',
             'data' => [
                 'user' => $user,
                 'token' => $token

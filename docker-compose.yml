@@ -1,0 +1,51 @@
+# POS Men Gede di Docker: aplikasi Laravel + MariaDB.
+# Semua pengaturan dibaca dari file .env (salin dari .env.docker.example).
+#
+#   docker compose up -d --build
+#   docker compose exec app php artisan pos:admin
+
+name: pos
+
+services:
+  app:
+    build: .
+    image: pos-backend:latest
+    restart: unless-stopped
+    env_file: ${POS_ENV_FILE:-.env}
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+    # Default hanya bisa diakses dari VPS itu sendiri (lewat reverse proxy).
+    # Untuk tes langsung lewat IP, isi POS_BIND=0.0.0.0 di .env.
+    ports:
+      - "${POS_BIND:-127.0.0.1}:${POS_PORT:-8080}:80"
+    volumes:
+      - pos-storage:/var/www/html/storage/app
+
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    # Hemat RAM (VPS 2 GB dipakai bersama proyek lain)
+    command:
+      - --innodb-buffer-pool-size=64M
+      - --performance-schema=OFF
+      - --max-connections=40
+    volumes:
+      - pos-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pos-db:
+  pos-storage:

@@ -20,6 +20,6 @@ class AdminMiddleware
         }
 
         // 2. Jika bukan admin, tendang ke login dengan pesan error
-        return redirect()->route('login')->with('error', 'Akses Dibatasi! Hanya Admin yang boleh masuk.');
+        return redirect()->route('login')->with('error', 'Halaman ini hanya untuk admin. Silakan masuk dengan akun admin.');
     }
 }

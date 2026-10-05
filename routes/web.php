@@ -27,6 +27,20 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Cadangan foto (menu, nota) untuk hosting yang tidak mengizinkan
+// `php artisan storage:link`. Bila symlink ada, file dilayani langsung
+// oleh web server dan rute ini tidak terpanggil.
+Route::get('/storage/{path}', function (string $path) {
+    $root = realpath(storage_path('app/public'));
+    $file = realpath($root . DIRECTORY_SEPARATOR . $path);
+
+    if (!$root || !$file || !str_starts_with($file, $root . DIRECTORY_SEPARATOR) || !is_file($file)) {
+        abort(404);
+    }
+
+    return response()->file($file, ['Cache-Control' => 'public, max-age=604800']);
+})->where('path', '.*');
+
 // 2. AUTH ROUTES
 Route::get('login', function () {
     return view('admin.login');
@@ -72,7 +86,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('admin.orders.index');
         Route::get('/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
         Route::patch('/{id}/void', [OrderController::class, 'void'])->name('admin.orders.void');
-        Route::get('/{id}/print', [OrderController::class, 'reprintReceipt'])->name('admin.orders.print');
     });
 
     // --- SETTLEMENT (LAPORAN SHIFT) ---
@@ -86,9 +99,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     // --- LAPORAN PENJUALAN ---
     Route::get('/reports', [ReportController::class, 'index'])->name('admin.reports.index');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
 
     // --- USER MANAGEMENT ---
     Route::patch('users/{id}/reset-password', [UserController::class, 'resetPassword'])->name('admin.users.reset_password');
+    Route::patch('users/{id}/pin', [UserController::class, 'updatePin'])->name('admin.users.update_pin');
     Route::resource('users', UserController::class)->names('admin.users');
 
     // --- EXPENSES (KAS KELUAR) ---

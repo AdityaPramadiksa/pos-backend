@@ -1,185 +1,133 @@
 @extends('admin.layout')
 
+@section('title', 'Pesanan ' . $order->receipt_number)
+
 @section('content')
-    <div class="space-y-6">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <a href="{{ route('admin.orders.index') }}"
-                    class="p-2 bg-[#2D303E] rounded-xl text-gray-400 hover:text-white transition">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
+    @php
+        $rp = fn ($v) => 'Rp ' . number_format((int) $v, 0, ',', '.');
+        $typeLabel = ['dine_in' => 'Makan di sini', 'to_go' => 'Bungkus', 'delivery' => 'Ojol'][$order->order_type] ?? $order->order_type;
+        $payLabel = $order->payment_method === 'delivery'
+            ? 'Lewat aplikasi ' . ucfirst($order->delivery_platform ?? 'ojol')
+            : ($order->payment_method ? ($order->payment_method === 'cash' ? 'Tunai' : strtoupper($order->payment_method)) : 'Belum dibayar');
+    @endphp
+
+    <header class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <a href="{{ route('admin.orders.index') }}" class="btn-text">← Kembali ke pesanan</a>
+            <h1 class="page-title mt-2">{{ $order->receipt_number }}</h1>
+            <p class="page-sub">{{ $order->created_at->locale('id')->isoFormat('dddd, D MMMM YYYY · HH:mm') }} WITA</p>
+        </div>
+        <div class="flex items-center gap-2">
+            @if ($order->status == 'paid')
+                <span class="chip-ok text-sm">Lunas</span>
+            @elseif ($order->status == 'pending')
+                <span class="chip-warn text-sm">Belum dibayar</span>
+            @else
+                <span class="chip-bad text-sm">Dibatalkan</span>
+            @endif
+        </div>
+    </header>
+
+    <div class="flex flex-wrap items-start gap-6">
+        <div class="flex min-w-0 flex-[999_1_520px] flex-col gap-6">
+            <section class="card card-pad grid grid-cols-2 gap-5 sm:grid-cols-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-white">Detail Pesanan</h1>
-                    <p class="text-sm text-gray-400">ID Transaksi: <span
-                            class="text-[#EA7C69] font-mono">{{ $order->receipt_number }}</span></p>
+                    <div class="text-xs text-muted">Kasir</div>
+                    <div class="mt-0.5 font-medium">{{ $order->user->name ?? '—' }}</div>
                 </div>
-            </div>
-
-            <div class="flex items-center space-x-3">
-                @if ($order->status == 'paid')
-                    <span
-                        class="px-4 py-2 bg-green-500/10 text-green-500 rounded-xl border border-green-500/20 text-xs font-bold tracking-widest">LUNAS</span>
-                    <button onclick="window.print()"
-                        class="p-2 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-400/20 hover:bg-blue-400/20 transition">
-                        <i class="fas fa-print mr-2"></i> Print Struk
-                    </button>
-                @elseif($order->status == 'void')
-                    <span
-                        class="px-4 py-2 bg-red-500/10 text-red-500 rounded-xl border border-red-500/20 text-xs font-bold tracking-widest">DIBATALKAN
-                        (VOID)</span>
-                @else
-                    <span
-                        class="px-4 py-2 bg-orange-500/10 text-orange-500 rounded-xl border border-orange-500/20 text-xs font-bold tracking-widest">PENDING</span>
-                @endif
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-[#2D303E] p-6 rounded-2xl border border-gray-700 grid grid-cols-2 gap-6">
-                    <div>
-                        <p class="text-xs text-gray-500 uppercase font-bold mb-2">Kasir / Petugas</p>
-                        <p class="text-white font-medium">{{ $order->user->name ?? 'System' }}</p>
-                        <p class="text-xs text-gray-400">{{ $order->created_at->format('d M Y - H:i') }} WITA</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500 uppercase font-bold mb-2">Pelanggan</p>
-                        <p class="text-white font-medium">{{ $order->customer_name ?? 'Guest / Walk-in' }}</p>
-                        <p class="text-xs text-gray-400">Meja: {{ $order->table_number ?? '-' }}
-                            ({{ strtoupper($order->order_type) }})</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500 uppercase font-bold mb-2">Metode Pembayaran</p>
-                        <p class="text-white font-medium uppercase">{{ $order->payment_method ?? 'Belum Bayar' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500 uppercase font-bold mb-2">Status Dapur</p>
-                        <span class="text-green-400 text-xs"><i class="fas fa-check-circle mr-1"></i> Pesanan Sudah Dicetak
-                            ke Dapur</span>
-                    </div>
+                <div>
+                    <div class="text-xs text-muted">Pelanggan</div>
+                    <div class="mt-0.5 font-medium">{{ $order->customer_name ?: 'Pelanggan umum' }}</div>
                 </div>
+                <div>
+                    <div class="text-xs text-muted">Jenis</div>
+                    <div class="mt-0.5 font-medium">{{ $typeLabel }}{{ $order->table_number && $order->table_number !== '-' ? ' · Meja ' . $order->table_number : '' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Cara bayar</div>
+                    <div class="mt-0.5 font-medium">{{ $payLabel }}</div>
+                </div>
+            </section>
 
-                <div class="bg-[#2D303E] rounded-2xl border border-gray-700 overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead class="bg-[#1F1D2B] text-gray-400 text-xs uppercase">
+            <section class="card">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th class="pl-5">Menu</th>
+                            <th class="text-right">Harga</th>
+                            <th class="text-right">Jumlah</th>
+                            <th class="pr-5 text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="num">
+                        @foreach ($order->items as $item)
                             <tr>
-                                <th class="p-4">Item Menu</th>
-                                <th class="p-4 text-center">Harga</th>
-                                <th class="p-4 text-center">Qty</th>
-                                <th class="p-4 text-right">Subtotal</th>
+                                <td class="pl-5">
+                                    <div class="font-medium">{{ $item->menu->name ?? 'Menu dihapus' }}</div>
+                                    @if ($item->note)
+                                        <div class="text-xs text-warn-ink">Catatan: {{ $item->note }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-right text-muted">{{ $rp($item->price) }}</td>
+                                <td class="text-right">{{ $item->qty }}</td>
+                                <td class="pr-5 text-right font-medium">{{ $rp($item->subtotal) }}</td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-700">
-                            @foreach ($order->items as $item)
-                                <tr>
-                                    <td class="p-4">
-                                        <div class="font-medium text-white">{{ $item->menu->name }}</div>
-                                        {{-- 🔥 FITUR BARU: Menampilkan Note di Tabel Admin --}}
-                                        @if ($item->note)
-                                            <div class="text-xs text-yellow-500 italic mt-1 flex items-start">
-                                                <i class="fas fa-edit mt-0.5 mr-1.5 text-[10px]"></i>
-                                                <span>Note: {{ $item->note }}</span>
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td class="p-4 text-center text-gray-400">Rp
-                                        {{ number_format($item->price, 0, ',', '.') }}</td>
-                                    <td class="p-4 text-center text-white">{{ $item->qty }}</td>
-                                    <td class="p-4 text-right text-white font-semibold">Rp
-                                        {{ number_format($item->subtotal, 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
+            </section>
 
-                @if ($order->status == 'void')
-                    <div class="bg-red-500/5 border border-red-500/20 p-6 rounded-2xl">
-                        <h3 class="text-red-500 font-bold mb-2"><i class="fas fa-exclamation-circle mr-2"></i> Alasan
-                            Pembatalan (VOID)</h3>
-                        <p class="text-gray-300 text-sm">"{{ $order->void_reason }}"</p>
-                        <p class="text-xs text-gray-500 mt-2 italic">Dibatalkan oleh: {{ $order->voidBy->name ?? 'Admin' }}
-                            pada {{ $order->updated_at->format('d/m/y H:i') }}</p>
-                    </div>
-                @endif
-            </div>
-
-            <div class="space-y-6">
-                <div class="bg-[#2D303E] p-6 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
-                    <div class="absolute -top-4 -left-4 w-8 h-8 bg-[#1F1D2B] rounded-full"></div>
-                    <div class="absolute -top-4 -right-4 w-8 h-8 bg-[#1F1D2B] rounded-full"></div>
-
-                    <h3 class="text-lg font-bold text-white mb-6 text-center border-b border-dashed border-gray-600 pb-4">
-                        Ringkasan Tagihan</h3>
-
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-gray-400">
-                            <span>Subtotal</span>
-                            <span>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="flex justify-between text-gray-400">
-                            <span>Pajak (PB1 10%)</span>
-                            <span>Rp {{ number_format($order->tax_amount, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="flex justify-between text-gray-400">
-                            <span>Diskon</span>
-                            <span class="text-red-400">- Rp
-                                {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
-                        </div>
-
-                        <div class="border-t border-dashed border-gray-600 pt-4 mt-4 flex justify-between items-end">
-                            <span class="text-white font-bold">TOTAL AKHIR</span>
-                            <span class="text-2xl font-bold text-[#EA7C69]">Rp
-                                {{ number_format($order->total_price, 0, ',', '.') }}</span>
-                        </div>
-
-                        @if ($order->status == 'paid')
-                            <div class="flex justify-between text-gray-400 pt-4 text-sm border-t border-gray-700">
-                                <span>Dibayar</span>
-                                <span>Rp {{ number_format($order->amount_paid, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="flex justify-between text-white font-medium">
-                                <span>Kembali</span>
-                                <span>Rp {{ number_format($order->amount_paid - $order->total_price, 0, ',', '.') }}</span>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
-                @if ($order->status != 'void')
-                    <div class="bg-[#2D303E] p-4 rounded-2xl border border-gray-700">
-                        <button onclick="document.getElementById('voidModal').classList.remove('hidden')"
-                            class="w-full py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">
-                            <i class="fas fa-times-circle mr-2"></i> Batalkan Transaksi (VOID)
-                        </button>
-                    </div>
-                @endif
-            </div>
+            @if ($order->status == 'void')
+                <section class="rounded-[14px] border border-bad/20 bg-bad-soft p-5">
+                    <h2 class="font-semibold text-bad">Transaksi dibatalkan</h2>
+                    <p class="mt-1 text-sm">Alasan: {{ $order->void_reason }}</p>
+                    <p class="mt-1 text-xs text-muted">Oleh {{ $order->voidBy->name ?? 'admin' }} · {{ $order->updated_at->format('d/m/y H:i') }}</p>
+                </section>
+            @endif
         </div>
+
+        <aside class="flex w-full flex-col gap-4 sm:w-[320px]">
+            <section class="card card-pad num flex flex-col gap-2 text-sm">
+                <h2 class="card-title mb-1">Rincian tagihan</h2>
+                <div class="flex justify-between text-muted"><span>Subtotal</span><span>{{ $rp($order->subtotal) }}</span></div>
+                <div class="flex justify-between text-muted"><span>Pajak (PB1)</span><span>{{ $rp($order->tax_amount) }}</span></div>
+                @if ($order->discount_amount > 0)
+                    <div class="flex justify-between text-muted"><span>Diskon</span><span>− {{ $rp($order->discount_amount) }}</span></div>
+                @endif
+                <div class="mt-2 flex items-baseline justify-between border-t border-line pt-3">
+                    <span class="font-semibold">Total</span><span class="text-xl font-bold">{{ $rp($order->total_price) }}</span>
+                </div>
+                @if ($order->status == 'paid' && $order->payment_method === 'cash')
+                    <div class="flex justify-between text-muted"><span>Uang diterima</span><span>{{ $rp($order->amount_paid) }}</span></div>
+                    <div class="flex justify-between text-muted"><span>Kembalian</span><span>{{ $rp($order->change_amount) }}</span></div>
+                @endif
+            </section>
+
+            @if ($order->status != 'void')
+                <button type="button" class="btn-ghost text-bad" onclick="document.getElementById('void-dialog').showModal()">
+                    Batalkan transaksi
+                </button>
+            @endif
+        </aside>
     </div>
 
-    <div id="voidModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-        <div class="bg-[#2D303E] w-full max-w-md p-8 rounded-3xl border border-gray-700 shadow-2xl">
-            <h2 class="text-xl font-bold text-white mb-4">Konfirmasi VOID</h2>
-            <p class="text-gray-400 text-sm mb-6">Harap masukkan alasan pembatalan transaksi <span
-                    class="text-white font-bold">{{ $order->receipt_number }}</span> ini.</p>
-
-            <form action="{{ route('admin.orders.void', $order->id) }}" method="POST" class="space-y-4">
-                @csrf
-                @method('PATCH')
-                <textarea name="void_reason" required
-                    class="w-full bg-[#1F1D2B] border border-gray-600 rounded-xl p-4 text-white focus:border-red-500 outline-none transition"
-                    placeholder="Contoh: Salah input menu / Pelanggan membatalkan pesanan" rows="3"></textarea>
-
-                <div class="flex space-x-3">
-                    <button type="button" onclick="document.getElementById('voidModal').classList.add('hidden')"
-                        class="flex-1 py-3 text-gray-400 font-bold">Batal</button>
-                    <button type="submit"
-                        class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition">YA, VOID
-                        SEKARANG</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <dialog id="void-dialog" class="w-[min(92vw,440px)] rounded-[14px] border border-line p-0 backdrop:bg-ink/40">
+        <form action="{{ route('admin.orders.void', $order->id) }}" method="POST" class="flex flex-col gap-4 p-6">
+            @csrf
+            @method('PATCH')
+            <div>
+                <h2 class="text-[17px] font-semibold">Batalkan {{ $order->receipt_number }}?</h2>
+                <p class="mt-1 text-sm text-muted">Stok menu dikembalikan dan total shift dihitung ulang. Tindakan ini tidak bisa diurungkan.</p>
+            </div>
+            <div>
+                <label class="label" for="void_reason">Alasan pembatalan</label>
+                <textarea id="void_reason" name="void_reason" rows="3" class="field" required
+                    placeholder="Contoh: Salah input menu, pelanggan membatalkan pesanan"></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" class="btn-ghost" onclick="this.closest('dialog').close()">Kembali</button>
+                <button type="submit" class="btn-danger">Batalkan transaksi</button>
+            </div>
+        </form>
+    </dialog>
 @endsection

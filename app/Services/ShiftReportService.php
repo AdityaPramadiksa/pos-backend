@@ -141,7 +141,33 @@ class ShiftReportService
      * Uang masuk per cara bayar. Pembayaran via ojol (payment_method = delivery)
      * dipecah per platform supaya terlihat Gojek/Grab/ShopeeFood masing-masing berapa.
      */
-    private static function paymentBreakdown($paid): array
+    /**
+     * Ringkasan kas satu shift untuk tabel riwayat: penjualan, uang tunai
+     * yang seharusnya ada, uang yang dihitung kasir, dan selisihnya.
+     */
+    public static function cashSummary(Settlement $settlement): array
+    {
+        if ($settlement->status === 'open') {
+            self::syncTotals($settlement);
+        }
+
+        $sales = (int) ($settlement->total_cash_sales + $settlement->total_qris_sales
+            + $settlement->total_debit_sales + $settlement->total_credit_sales
+            + $settlement->total_delivery_sales);
+        $expected = (int) ($settlement->starting_cash + $settlement->total_cash_sales - $settlement->total_expenses);
+        $actual = $settlement->status === 'closed' && $settlement->actual_cash_on_hand !== null
+            ? (int) $settlement->actual_cash_on_hand
+            : null;
+
+        return [
+            'sales'      => $sales,
+            'expected'   => $expected,
+            'actual'     => $actual,
+            'difference' => $actual !== null ? $actual - $expected : null,
+        ];
+    }
+
+    public static function paymentBreakdown($paid): array
     {
         $rows = [];
 
