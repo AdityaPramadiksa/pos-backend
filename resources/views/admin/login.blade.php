@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk · Panel Admin Men Gede</title>
+    <link rel="icon" type="image/png" href="{{ asset('kasir-icon.png') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -25,7 +26,7 @@
 <body class="flex min-h-screen items-center justify-center bg-ground px-4 font-sans text-ink">
     <main class="w-full max-w-[400px]">
         <div class="mb-8 flex items-center gap-3">
-            <span class="grid h-10 w-10 place-items-center rounded-[10px] bg-brand text-sm font-bold text-white">MG</span>
+            <img src="{{ asset('kasir-icon.png') }}" alt="" class="h-10 w-10 rounded-[10px]">
             <div>
                 <div class="text-lg font-bold leading-tight">Men Gede</div>
                 <div class="text-sm text-muted">Panel admin</div>

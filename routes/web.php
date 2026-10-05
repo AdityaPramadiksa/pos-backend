@@ -14,7 +14,9 @@ use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SettlementController;
 use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\ExpenseController; // 🔥 FIX: Import ditambahkan!
+use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\Admin\AppReleaseController;
+use App\Services\KasirApk;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +42,21 @@ Route::get('/storage/{path}', function (string $path) {
 
     return response()->file($file, ['Cache-Control' => 'public, max-age=604800']);
 })->where('path', '.*');
+
+// Halaman unduh aplikasi kasir untuk HP outlet (tanpa login)
+Route::get('/unduh', function () {
+    return view('download', ['info' => KasirApk::info()]);
+})->name('download.page');
+
+Route::get('/unduh/kasir-men-gede.apk', function () {
+    $info = KasirApk::info();
+    abort_unless($info, 404);
+
+    return response()->download(KasirApk::path(), KasirApk::downloadName($info), [
+        'Content-Type' => 'application/vnd.android.package-archive',
+        'Cache-Control' => 'no-cache',
+    ]);
+})->name('download.apk');
 
 // 2. AUTH ROUTES
 Route::get('login', function () {
@@ -118,5 +135,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
         // Update PIN Keamanan (Security)
         Route::post('/update-pin', [SettingController::class, 'updatePin'])->name('admin.settings.update_pin');
+    });
+
+    // Aplikasi kasir (APK untuk halaman /unduh)
+    Route::prefix('app-release')->group(function () {
+        Route::get('/', [AppReleaseController::class, 'index'])->name('admin.app_release.index');
+        Route::post('/', [AppReleaseController::class, 'store'])->name('admin.app_release.store');
     });
 });

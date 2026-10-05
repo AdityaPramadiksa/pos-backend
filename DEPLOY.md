@@ -174,3 +174,11 @@ php artisan up
 | *419 Page Expired* saat login admin | `APP_URL` tidak sama dengan alamat yang dibuka (http vs https). Perbaiki lalu `php artisan config:cache`. |
 | Perubahan `.env` tidak terasa | Jalankan `php artisan config:cache` lagi setiap kali `.env` diubah. |
 | Aplikasi kasir "Tidak tersambung ke server" | Coba buka `https://pos.namawarung.com/api/ping` di browser HP. Harus muncul `"status":"success"`. |
+
+## Membagikan aplikasi kasir ke HP outlet
+
+1. Di laptop, build APK: `flutter build apk --release` (hasil: `build/app/outputs/flutter-apk/app-release.apk`, satu file untuk semua jenis HP). Naikkan dulu `version` di `pubspec.yaml`.
+2. Di panel admin, buka **Aplikasi kasir** → pilih file APK → isi nomor versi → **Unggah & bagikan**.
+3. HP outlet membuka `https://domain-anda/unduh` (atau memindai kode QR di halaman admin), lalu mengunduh dan memasang. Versi baru dipasang menimpa yang lama tanpa kehilangan data.
+
+APK tersimpan di `storage/app/apk` (ikut volume Docker `pos-storage`). Batas unggah 150 MB. Kalau server di belakang reverse proxy, batas ukuran request di proxy juga harus cukup besar (Caddy: `request_body { max_size 160MB }`).

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Panel Admin') · Men Gede</title>
+    <link rel="icon" type="image/png" href="{{ asset('kasir-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -103,6 +104,7 @@
             ]],
             ['group' => 'Toko', 'items' => [
                 ['Staff', 'admin.users.index', 'admin/users*', 'fa-solid fa-user-group'],
+                ['Aplikasi kasir', 'admin.app_release.index', 'admin/app-release*', 'fa-solid fa-mobile-screen-button'],
                 ['Pengaturan', 'admin.settings.index', 'admin/settings*', 'fa-solid fa-gear'],
             ]],
         ];
@@ -114,7 +116,7 @@
             <i class="fa-solid fa-bars text-lg"></i>
         </button>
         <div class="flex items-center gap-2">
-            <span class="grid h-7 w-7 place-items-center rounded-md bg-brand text-xs font-bold text-white">MG</span>
+            <img src="{{ asset('kasir-icon.png') }}" alt="" class="h-7 w-7 rounded-md">
             <span class="font-semibold">Men Gede</span>
         </div>
         <span class="w-9"></span>
@@ -127,7 +129,7 @@
             class="fixed inset-y-0 left-0 z-50 flex w-[248px] -translate-x-full flex-col border-r border-line bg-white px-4 py-6 transition-transform duration-200 lg:translate-x-0 print:hidden">
             <div class="flex items-center justify-between px-2">
                 <div class="flex items-center gap-2.5">
-                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-brand text-sm font-bold text-white">MG</span>
+                    <img src="{{ asset('kasir-icon.png') }}" alt="" class="h-8 w-8 rounded-lg">
                     <div>
                         <div class="text-[15px] font-bold leading-tight">Men Gede</div>
                         <div class="text-xs text-muted">Panel admin</div>
