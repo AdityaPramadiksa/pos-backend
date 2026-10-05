@@ -1,0 +1,16 @@
+# Sambungkan POS ke jaringan Docker milik reverse proxy (Caddy) yang sudah
+# memegang port 80/443 di VPS, supaya proxy bisa memanggil "pos-app:80".
+# Aktifkan lewat .env:  COMPOSE_FILE=docker-compose.yml:docker-compose.caddy.yml
+
+services:
+  app:
+    networks:
+      default: {}
+      proxy:
+        aliases:
+          - pos-app
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-bekuin_default}
